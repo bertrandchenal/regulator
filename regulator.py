@@ -16,7 +16,8 @@ def rsleep(seconds=1):
     'Randomized sleep'
     sleep(seconds + random() * seconds)
 
-class Connection:
+
+class Daemon:
 
     def __init__(self, name=None):
         self.consul = consul.Consul()
@@ -64,7 +65,7 @@ class Connection:
             finally:
                 self.session = None
 
-    def main(self):
+    def start(self):
         while True:
             try:
                 success = self.election()
@@ -88,9 +89,15 @@ def cli():
         '-n', '--name', default=default_name,
         help='Choose node name (defaults to %s)' % default_name,
     )
+    parser.add_argument(
+        '-d', '--daemon', action='store_true',
+        help='Start monitoring daemon',
+    )
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     args = cli()
-    connection = Connection(**vars(args))
-    connection.main()
+    if args.daemon:
+        daemon = Daemon(name=args.name)
+        daemon.start()
