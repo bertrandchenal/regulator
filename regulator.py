@@ -39,7 +39,7 @@ class Daemon:
             success = self.consul.kv.put(LEADER_KEY, self.name, acquire=session) # TODO session may be already stalled!
             if success:
                 self.session = session
-                return True
+                return
             else:
                 print(':-(')
                 rsleep()
@@ -51,7 +51,7 @@ class Daemon:
 
         # Here be dragons
         print('%s was elected' % self.name)
-        rsleep()
+        rsleep(3)
 
     def cleanup(self):
         print('CLEANUP!')
@@ -65,17 +65,31 @@ class Daemon:
             finally:
                 self.session = None
 
+    def setup(self):
+        pass
+
+    ## checks
+    # self.consul.agent.checks()
+    # check = consul.Check.tcp('127.0.0.1', 5432, 5)
+    # self.consul.agent.check.register('pg', check=check)
+
+    ## Buckets
+    # ??
+
+
     def start(self):
+        self.setup()
+
         while True:
             try:
-                success = self.election()
-                print('SUCESS')
+                self.election()
                 # When election returns we are leader
                 self.monitor()
                 # Release active session
                 self.cleanup()
             except requests.exceptions.RequestException:
                 # Connection issue, we wait a bit and we try again
+                print('Connection error!')
                 rsleep()
                 pass
             except KeyboardInterrupt:
